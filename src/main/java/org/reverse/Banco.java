@@ -109,7 +109,7 @@ public class Banco {
 
     public static void deletarPessoa(int idPessoa) {
         Connection conn = Singleton.getConn();
-        String sql = "ALTER TABLE pessoa DROP COLUMN ?";
+        String sql = "DELETE FROM pessoa WHERE idPessoa = ?";
 
         try (PreparedStatement declaracao = conn.prepareStatement(sql)) {
             declaracao.setInt(1, idPessoa);
