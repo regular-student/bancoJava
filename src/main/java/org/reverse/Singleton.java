@@ -21,7 +21,4 @@ public class Singleton {
         }
         return conn;
     }
-
-
-
 }
