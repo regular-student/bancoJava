@@ -47,42 +47,45 @@ public class Banco {
 
         Connection conn = Singleton.getConn();
         String sql = "UPDATE pessoa SET saldo = saldo - ? WHERE idPessoa = ?";
+        String selectSql = "SELECT idPessoa, nomePessoa, saldo FROM pessoa WHERE idPessoa = ?";
 
-        try {
-            conn.setAutoCommit(false);
 
-            // Verifica se há saldo suficiente
-            String verificaSaldo = "SELECT saldo FROM pessoa WHERE idPessoa = ?";
-            try (PreparedStatement declaracaoSaldo = conn.prepareStatement(verificaSaldo)) {
-                declaracaoSaldo.setInt(1, idPessoa);
-                ResultSet rs = declaracaoSaldo.executeQuery();
-                if (!rs.next()) {
-                    System.out.println("Pessoa não encontrada.");
-                    return;
-                }
+        Pessoa pessoa;
 
-                int saldoAtual = rs.getInt("saldo");
-                if (saldoAtual < valor) {
-                    System.out.println("Saldo insuficiente.");
-                    return;
-                }
+        try (PreparedStatement selectStatement = conn.prepareStatement(selectSql)) {
+            selectStatement.setInt(1, idPessoa);
+            ResultSet rs = selectStatement.executeQuery();
+
+            if (rs.next()) {
+                // Criando o objeto Pessoa com os dados retornados
+                int id = rs.getInt("idPessoa");
+                String nome = rs.getString("nomePessoa");
+                int saldo = rs.getInt("saldo");
+
+                pessoa = new Pessoa(id, nome, saldo);
+            } else {
+                System.out.println("Pessoa não encontrada");
+                return;
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return;
+        }
 
-            try (PreparedStatement declaracao = conn.prepareStatement(sql)) {
-                declaracao.setInt(1, valor);
-                declaracao.setInt(2, idPessoa);
+        if (pessoa.getSaldo() < valor) {
+            System.out.println("Saldo insuficiente");
+            return;
+        }
 
-                int inserido = declaracao.executeUpdate();
-                if (inserido > 0) {
-                    System.out.println("Saque realizado");
-                } else {
-                    System.out.println("Pessoa não encontrada");
-                }
-            } catch (SQLException e) {
-                conn.rollback();
-                e.printStackTrace();
-            } finally {
-                conn.setAutoCommit(true);
+        try (PreparedStatement declaracao = conn.prepareStatement(sql)) {
+            declaracao.setInt(1, valor);
+            declaracao.setInt(2, idPessoa);
+
+            int inserido = declaracao.executeUpdate();
+            if (inserido > 0) {
+                System.out.println("Saque realizado");
+            } else {
+                System.out.println("Pessoa não encontrada");
             }
         } catch (SQLException e) {
             e.printStackTrace();
